@@ -25,8 +25,8 @@ Keeping those classes separate is the point. Conflating a vocabulary term with a
 |---|---|---|
 | **ActivityPub** | W3C Recommendation, **23 January 2018** (`https://www.w3.org/TR/activitypub/`) | A decentralized social networking protocol based on ActivityStreams 2.0, defining client-to-server and server-to-server interactions. Does not standardize a one-shot portable migration of followers, old posts, media, follows, blocks, mutes, and bookmarks. |
 | **ActivityStreams `Move`** | W3C ActivityStreams 2.0 Vocabulary (`https://www.w3.org/TR/activitystreams-vocabulary/#dfn-move`) | A generic activity meaning **an actor moved an object from an origin to a target** (e.g. "Sally moved a post from List A to List B"). The vocabulary defines the activity type and its `actor`/`object`/`origin`/`target` properties; it does **not** define an account-portability protocol. Do not silently transform this vocabulary definition into a standardized account-migration operation. |
-| **Mastodon account migration** | `https://docs.joinmastodon.org/user/moving/` (inspected 2026-09-04) | An **implementation profile** that *uses* `Move` plus additional conventions. Requires an alias relationship (`alsoKnownAs`) from new account → old account before a move is accepted; can move followers when remote software supports `Move`; does **not** move posts/media as part of the profile move; follows/blocks/mutes/bookmarks are handled via separate CSV export/import and archive export, not via `Move`. |
-| **`tootctl self-destruct`** | `https://docs.joinmastodon.org/admin/tootctl/#self-destruct` | Mastodon-specific **implementation tooling** for instance shutdown: broadcasts `Delete` activities to known peers to leave little cached material behind. **Not a W3C ActivityPub requirement.** |
+| **Mastodon account migration** | `https://docs.joinmastodon.org/user/moving/` (inspected 2026-09-04) | An **implementation profile** that *uses* `Move` plus additional conventions. Mastodon's Move is used to migrate followers and is considered valid only when the new account has an alias (`alsoKnownAs`) pointing to the old account. Compatible remote software can use that migration to move followers. Historical posts/media are **not** moved by Mastodon's current profile-move workflow; other relationship data (follows, blocks, mutes, bookmarks) is handled separately via CSV export/import and archive export, not via `Move`. |
+| **`tootctl self-destruct`** | `https://docs.joinmastodon.org/admin/tootctl/#self-destruct` | Mastodon-specific **implementation tooling** for instance shutdown: broadcasts `Delete` activities to known peers to leave little cached material behind. **Not a W3C ActivityPub requirement.** Mastodon documents self-destruct as its own administrative CLI behavior; that is implementation tooling, not an ActivityPub shutdown requirement. |
 
 **Boundary preserved:** ActivityStreams `Move` exists as a generic vocabulary activity; Mastodon's account-migration workflow is an implementation profile using `Move` plus additional conventions (alias, follower handling, non-migration of posts). That does not mean the W3C ActivityPub Recommendation itself standardizes portable migration of followers, old posts, media, follows, blocks, mutes, and bookmarks as one operation.
 
@@ -49,12 +49,12 @@ HN comments are **claims to inspect, not evidence**. Each proposition below was 
 ### 3. Follower migration versus content migration are distinct
 - **Source:** `whywhywhywhy` — comment `49113171` — *"I mean the actual thing that has value IS the posts and there would be less burden on people shutting down these servers if you were not destroying that work by doing so."* (contrasting with `49113081`'s follower-only move).
 - **HN proposition:** Follower graph migration and historical post/content migration are separate concerns with different outcomes.
-- **Classification:** **supported by inspected Mastodon implementation documentation** — Mastodon's migration moves followers (when remote supports `Move`) but explicitly does not move posts/media; the two are handled via different mechanisms (Move vs archive export).
+- **Classification:** **supported by inspected Mastodon implementation documentation** — Mastodon uses an ActivityStreams Move whose actor/object identify the old account and whose target identifies the new account; compatible remote software can use that migration to move followers. Historical posts/media are not moved by Mastodon's current profile-move workflow; the two are handled via different mechanisms (Move vs archive export).
 
-### 4. FEP 1580 as a proposal to move content
+### 4. FEP-1580 as a proposal to move objects/content
 - **Source:** `NoraCodes` — comment `49113056` — *"The protocol is ActivityPub and the feature you suggest is being considered as FEP 1580"* (linking `codeberg.org/fediverse/fep` `fep/1580`).
-- **HN proposition:** There is an active proposal (FEP 1580) to standardize content migration for ActivityPub.
-- **Classification:** **needs qualification / extension or deployment evidence** — FEP 1580 is a Fediverse Enhancement Proposal (community extension track), not part of the W3C ActivityPub Recommendation. Its existence shows the gap is recognized, but its adoption/standardization status requires inspecting the FEP itself and deployment uptake, beyond the W3C Recommendation and Mastodon docs inspected here.
+- **HN proposition:** FEP-1580 offers a route toward content/object migration.
+- **Classification:** **needs qualification / extension or deployment evidence** — FEP-1580, "Move Actor Objects with a migration Collection" (inspected at `https://codeberg.org/fediverse/fep/raw/branch/main/fep/1580/fep-1580.md`), is identified in its source as **DRAFT**, type **implementation**, describing migration of actor-owned objects using `migration`/`moves` collections. It is a draft Fediverse Enhancement Proposal describing an extension mechanism for object migration, not part of the W3C ActivityPub Recommendation; implementation/adoption still requires separate evidence.
 
 ### 5. Mastodon `tootctl self-destruct` for shutdown
 - **Source:** `riffic` — comment `49112943` — *"don't forget to `tootctl self-destruct`"* with link to `docs.joinmastodon.org/admin/tootctl/#self-destruct`, and note: *"Without self-destruct, remote servers may retain cached profiles and posts indefinitely."*
@@ -86,9 +86,9 @@ In particular, Mastodon's `alsoKnownAs` migration rule, post-import limitation, 
 | File | Purpose |
 |---|---|
 | `fixtures/old_actor.json` | Synthetic old account (`https://old.example/users/alice`). |
-| `fixtures/new_actor.json` | Synthetic replacement account; contains `alsoKnownAs: ["https://old.example/users/alice"]` — the alias relationship required by the lab's Mastodon-style migration example. |
-| `fixtures/move.json` | Synthetic Mastodon-style `Move` activity (`actor` + `object` + `target` + `origin`). |
-| `fixtures/archive.json` | Tiny synthetic historical-post archive (`OrderedCollection` of `Note`s) — **deliberately separate** from the Move fixture. |
+| `fixtures/new_actor.json` | Synthetic replacement account; contains `alsoKnownAs: ["https://old.example/users/alice"]` — the alias relationship required by the lab's Mastodon-style migration example (new actor points to old actor). |
+| `fixtures/move.json` | Synthetic Mastodon-style `Move` activity whose `actor`/`object` identify the old account and whose `target` identifies the new account. |
+| `fixtures/archive.json` | Synthetic lab fixture representing historical content kept separate from the synthetic Move activity. Mastodon documentation independently states that posts and media can be exported in an Activity Streams 2.0 archive and that Mastodon currently does not import posts/media as part of a profile move. The fixture itself is not evidence of a standardized post-migration protocol. Its `OrderedCollection` shape is a fixture design choice; the current Mastodon moving guide supports archive export and non-import, but does not make that synthetic collection the migration protocol. |
 
 ## Scripts
 
@@ -111,9 +111,9 @@ The CI workflow (`.github/workflows/audit.yml`) runs `bash scripts/verify.sh` on
 
 ## What Verification Shows
 
-1. The `Move` fixture identifies an `actor`/`object` and migration `target` but **does not contain** the historical post bodies from `archive.json`.
-2. The new synthetic actor contains the `alsoKnownAs` alias relationship required by the lab's Mastodon-style migration example.
-3. Follower migration and historical-content migration are represented as **separate concepts** (Move vs archive).
+1. The `Move` fixture has the old actor as `actor`/`object` and the replacement actor as `target`, but **does not contain** the historical post bodies from the separate `archive.json` fixture.
+2. The new synthetic actor has `alsoKnownAs` pointing from the new actor to the old actor, matching Mastodon's alias requirement (verified by `verify.sh`).
+3. Mastodon uses an ActivityStreams Move whose actor/object identify the old account and whose target identifies the new account; compatible remote software can use that migration to move followers. Historical posts/media are not moved by Mastodon's current profile-move workflow — the two are represented as separate fixtures and the Move does not embed the archive.
 4. **Absence of post bodies from the synthetic Move fixture is not itself proof that no implementation could ever migrate posts** — that stronger claim must come from inspected Mastodon documentation or another authoritative deployment source (here: `docs.joinmastodon.org/user/moving/` confirms Mastodon currently does not move posts/media).
 5. Branch/server shutdown administration such as Mastodon-specific `tootctl self-destruct` behavior is **implementation tooling, not a W3C ActivityPub requirement.**
 
@@ -124,6 +124,7 @@ The CI workflow (`.github/workflows/audit.yml`) runs `bash scripts/verify.sh` on
 - W3C ActivityPub Recommendation — `https://www.w3.org/TR/activitypub/` (W3C Recommendation 23 January 2018)
 - W3C ActivityStreams 2.0 Vocabulary, `Move` — `https://www.w3.org/TR/activitystreams-vocabulary/#dfn-move` (generic: actor moved object from origin to target)
 - Mastodon documentation — `https://docs.joinmastodon.org/user/moving/` and `https://docs.joinmastodon.org/admin/tootctl/#self-destruct` (retrieved 2026-09-04)
+- FEP-1580 — `https://codeberg.org/fediverse/fep/raw/branch/main/fep/1580/fep-1580.md` (DRAFT, type implementation, "Move Actor Objects with a migration Collection", inspected 2026-09-04)
 - HN discussion — `https://news.ycombinator.com/item?id=49112327` (comments retrieved via HN API; treated as claims, not evidence)
 
 ## License
