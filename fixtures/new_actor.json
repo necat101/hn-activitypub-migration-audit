@@ -1,0 +1,13 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://new.example/users/alice",
+  "type": "Person",
+  "preferredUsername": "alice",
+  "inbox": "https://new.example/users/alice/inbox",
+  "outbox": "https://new.example/users/alice/outbox",
+  "followers": "https://new.example/users/alice/followers",
+  "following": "https://new.example/users/alice/following",
+  "alsoKnownAs": [
+    "https://old.example/users/alice"
+  ]
+}
