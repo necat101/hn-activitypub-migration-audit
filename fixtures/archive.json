@@ -1,0 +1,26 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://old.example/users/alice/outbox/archive",
+  "type": "OrderedCollection",
+  "orderedItems": [
+    {
+      "id": "https://old.example/users/alice/statuses/1",
+      "type": "Note",
+      "content": "Hello world, this is my first post with historical content.",
+      "published": "2024-01-15T12:00:00Z",
+      "attachment": [
+        {
+          "type": "Image",
+          "url": "https://old.example/media/photo1.jpg",
+          "mediaType": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "id": "https://old.example/users/alice/statuses/2",
+      "type": "Note",
+      "content": "Second post \u2014 should not appear inside the Move activity.",
+      "published": "2024-02-20T09:30:00Z"
+    }
+  ]
+}
