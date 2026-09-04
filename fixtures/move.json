@@ -1,0 +1,10 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://old.example/users/alice#moves/1",
+  "type": "Move",
+  "actor": "https://old.example/users/alice",
+  "object": "https://old.example/users/alice",
+  "target": "https://new.example/users/alice",
+  "origin": "https://old.example/users/alice",
+  "summary": "alice moved from old.example to new.example"
+}
